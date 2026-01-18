@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>N3 단어장</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+        .back-link {
+            color: #4facfe;
+            text-decoration: none;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .level-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #1a1a2e;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .chapter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chapter-card {
+            background: linear-gradient(145deg, #16213e, #1a1a2e);
+            border-radius: 14px;
+            padding: 20px;
+            text-decoration: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            border: 1px solid #2d3748;
+            transition: transform 0.2s;
+        }
+        .chapter-card:active {
+            transform: scale(0.98);
+        }
+        .chapter-num {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .chapter-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.1rem;
+        }
+        .chapter-info p {
+            margin: 0;
+            color: #888;
+            font-size: 0.85rem;
+        }
+        .arrow {
+            margin-left: auto;
+            font-size: 1.3rem;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-link">‹ 급수 선택</a>
+            <h1>
+                <div class="level-badge">N3</div>
+                JLPT N3
+            </h1>
+            <p class="subtitle">챕터를 선택하세요</p>
+        </header>
+        
+        <div class="chapter-list">
+            <a href="chapter1.html" class="chapter-card">
+                <div class="chapter-num">1</div>
+                <div class="chapter-info">
+                    <h3>Chapter 1</h3>
+                    <p>156 단어</p>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+            
+            <a href="chapter2.html" class="chapter-card">
+                <div class="chapter-num">2</div>
+                <div class="chapter-info">
+                    <h3>Chapter 2</h3>
+                    <p>153 단어</p>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+            
+            <a href="chapter3.html" class="chapter-card">
+                <div class="chapter-num">3</div>
+                <div class="chapter-info">
+                    <h3>Chapter 3</h3>
+                    <p>151 단어</p>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+            
+            <a href="chapter4.html" class="chapter-card">
+                <div class="chapter-num">4</div>
+                <div class="chapter-info">
+                    <h3>Chapter 4</h3>
+                    <p>136 단어</p>
+                </div>
+                <span class="arrow">›</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

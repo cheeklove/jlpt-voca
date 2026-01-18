@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>N3 단어장 Ch.3</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            user-select: none;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        h1 {
+            font-size: 1.3rem;
+            margin: 0;
+            color: #fff;
+        }
+        .progress {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            justify-content: center;
+        }
+        .toggle-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: #4a5568;
+            color: #fff;
+        }
+        .toggle-btn.inactive {
+            background: #2d3748;
+            color: #718096;
+        }
+        .toggle-btn.shuffle {
+            background: #805ad5;
+            color: #fff;
+        }
+        .toggle-btn.reset {
+            background: #dd6b20;
+            color: #fff;
+        }
+        .category-select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #2d3748;
+            color: #fff;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        .card {
+            background: linear-gradient(145deg, #16213e, #1a1a2e);
+            border-radius: 16px;
+            padding: 28px 20px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: 16px;
+            border: 1px solid #2d3748;
+        }
+        .kanji {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 16px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .reading {
+            font-size: 1.4rem;
+            color: #63b3ed;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .meaning {
+            font-size: 1.5rem;
+            color: #68d391;
+            text-align: center;
+            padding: 12px 20px;
+            background: rgba(104, 211, 145, 0.1);
+            border-radius: 10px;
+        }
+        .hidden {
+            visibility: hidden;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .nav-btn {
+            flex: 1;
+            max-width: 150px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn.prev {
+            background: #4a5568;
+            color: #fff;
+        }
+        .nav-btn.next {
+            background: #4299e1;
+            color: #fff;
+        }
+        .nav-btn:active {
+            transform: scale(0.96);
+        }
+        .category-tag {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: #4a5568;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            color: #a0aec0;
+        }
+        .tap-hint {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" style="color:#4facfe;text-decoration:none;font-size:0.9rem;">‹ 챕터 선택</a>
+            <h1>N3 단어장 Ch.3</h1>
+            <span class="progress" id="progress">1 / 100</span>
+        </header>
+        
+        <select class="category-select" id="categorySelect" onchange="changeCategory()">
+            <option value="all">전체</option>
+            <option value="음독명사">음독 명사</option>
+            <option value="훈독명사">훈독 명사</option>
+            <option value="동사">동사</option>
+            <option value="い형용사">い형용사</option>
+            <option value="な형용사">な형용사</option>
+            <option value="부사">부사 및 기타</option>
+            <option value="가타카나">가타카나어</option>
+        </select>
+        
+        <div class="card" onclick="revealAll()">
+            <span class="category-tag" id="categoryTag">명사</span>
+            <div class="kanji" id="kanji">漢字</div>
+            <div class="reading" id="reading">かんじ</div>
+            <div class="meaning" id="meaning">한자</div>
+        </div>
+        
+        <div class="controls">
+            <button class="toggle-btn reset" id="resetBtn" onclick="resetOrder()">↺ 초기화</button>
+            <button class="toggle-btn shuffle" id="shuffleBtn" onclick="shuffleCards()">🔀 셔플</button>
+            <button class="toggle-btn active" id="toggleReading" onclick="toggleReading()">발음 표시</button>
+            <button class="toggle-btn active" id="toggleMeaning" onclick="toggleMeaning()">정답 표시</button>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="nav-btn prev" onclick="prevCard()">◀ 이전</button>
+            <button class="nav-btn next" onclick="nextCard()">다음 ▶</button>
+        </div>
+        
+        <p class="tap-hint">카드를 탭하면 숨김 해제</p>
+    </div>
+
+    <script>
+        const words = [
+            // 음독 명사
+            {kanji: "記憶", reading: "きおく", meaning: "기억", category: "음독명사"},
+            {kanji: "機会", reading: "きかい", meaning: "기회", category: "음독명사"},
+            {kanji: "機械", reading: "きかい", meaning: "기계", category: "음독명사"},
+            {kanji: "季節", reading: "きせつ", meaning: "계절", category: "음독명사"},
+            {kanji: "規則", reading: "きそく", meaning: "규칙", category: "음독명사"},
+            {kanji: "期待", reading: "きたい", meaning: "기대", category: "음독명사"},
+            {kanji: "帰宅", reading: "きたく", meaning: "귀가", category: "음독명사"},
+            {kanji: "喫茶店", reading: "きっさてん", meaning: "다방, 찻집", category: "음독명사"},
+            {kanji: "記入", reading: "きにゅう", meaning: "기입", category: "음독명사"},
+            {kanji: "気分", reading: "きぶん", meaning: "기분", category: "음독명사"},
+            {kanji: "疑問", reading: "ぎもん", meaning: "의문", category: "음독명사"},
+            {kanji: "逆", reading: "ぎゃく", meaning: "역, 반대", category: "음독명사"},
+            {kanji: "急行", reading: "きゅうこう", meaning: "급행", category: "음독명사"},
+            {kanji: "休日", reading: "きゅうじつ", meaning: "휴일", category: "음독명사"},
+            {kanji: "牛肉", reading: "ぎゅうにく", meaning: "쇠고기", category: "음독명사"},
+            {kanji: "牛乳", reading: "ぎゅうにゅう", meaning: "우유", category: "음독명사"},
+            {kanji: "教育", reading: "きょういく", meaning: "교육", category: "음독명사"},
+            {kanji: "教師", reading: "きょうし", meaning: "교사", category: "음독명사"},
+            {kanji: "教室", reading: "きょうしつ", meaning: "교실", category: "음독명사"},
+            {kanji: "競争", reading: "きょうそう", meaning: "경쟁", category: "음독명사"},
+            {kanji: "兄弟", reading: "きょうだい", meaning: "형제", category: "음독명사"},
+            {kanji: "共通", reading: "きょうつう", meaning: "공통", category: "음독명사"},
+            {kanji: "共同", reading: "きょうどう", meaning: "공동", category: "음독명사"},
+            {kanji: "興味", reading: "きょうみ", meaning: "흥미", category: "음독명사"},
+            {kanji: "協力", reading: "きょうりょく", meaning: "협력", category: "음독명사"},
+            {kanji: "去年", reading: "きょねん", meaning: "작년", category: "음독명사"},
+            {kanji: "距離", reading: "きょり", meaning: "거리", category: "음독명사"},
+            {kanji: "記録", reading: "きろく", meaning: "기록", category: "음독명사"},
+            {kanji: "禁煙", reading: "きんえん", meaning: "금연", category: "음독명사"},
+            {kanji: "銀行", reading: "ぎんこう", meaning: "은행", category: "음독명사"},
+            {kanji: "禁止", reading: "きんし", meaning: "금지", category: "음독명사"},
+            {kanji: "近所", reading: "きんじょ", meaning: "근처", category: "음독명사"},
+            {kanji: "区域", reading: "くいき", meaning: "구역", category: "음독명사"},
+            {kanji: "空気", reading: "くうき", meaning: "공기", category: "음독명사"},
+            {kanji: "空港", reading: "くうこう", meaning: "공항", category: "음독명사"},
+            {kanji: "区別", reading: "くべつ", meaning: "구별", category: "음독명사"},
+            {kanji: "苦労", reading: "くろう", meaning: "고생", category: "음독명사"},
+            {kanji: "訓練", reading: "くんれん", meaning: "훈련", category: "음독명사"},
+            {kanji: "経営", reading: "けいえい", meaning: "경영", category: "음독명사"},
+            {kanji: "計画", reading: "けいかく", meaning: "계획", category: "음독명사"},
+            {kanji: "警官", reading: "けいかん", meaning: "경관, 경찰관", category: "음독명사"},
+            {kanji: "経験", reading: "けいけん", meaning: "경험", category: "음독명사"},
+            {kanji: "経済", reading: "けいざい", meaning: "경제", category: "음독명사"},
+            {kanji: "警察", reading: "けいさつ", meaning: "경찰", category: "음독명사"},
+            {kanji: "計算", reading: "けいさん", meaning: "계산", category: "음독명사"},
+            {kanji: "経由", reading: "けいゆ", meaning: "경유", category: "음독명사"},
+            {kanji: "けが", reading: "けが", meaning: "부상, 다침", category: "음독명사"},
+            {kanji: "外科", reading: "げか", meaning: "외과", category: "음독명사"},
+            {kanji: "景色", reading: "けしき", meaning: "경치", category: "음독명사"},
+            {kanji: "血液型", reading: "けつえきがた", meaning: "혈액형", category: "음독명사"},
+            {kanji: "結果", reading: "けっか", meaning: "결과", category: "음독명사"},
+            {kanji: "結婚", reading: "けっこん", meaning: "결혼", category: "음독명사"},
+            {kanji: "欠点", reading: "けってん", meaning: "결점", category: "음독명사"},
+            {kanji: "結論", reading: "けつろん", meaning: "결론", category: "음독명사"},
+            {kanji: "件", reading: "けん", meaning: "건", category: "음독명사"},
+            {kanji: "県", reading: "けん", meaning: "현(일본의 행정구역)", category: "음독명사"},
+            {kanji: "原因", reading: "げんいん", meaning: "원인", category: "음독명사"},
+            {kanji: "玄関", reading: "げんかん", meaning: "현관", category: "음독명사"},
+            {kanji: "研究", reading: "けんきゅう", meaning: "연구", category: "음독명사"},
+            {kanji: "健康", reading: "けんこう", meaning: "건강", category: "음독명사"},
+            {kanji: "検査", reading: "けんさ", meaning: "검사", category: "음독명사"},
+            {kanji: "現在", reading: "げんざい", meaning: "현재", category: "음독명사"},
+            {kanji: "研修", reading: "けんしゅう", meaning: "연수", category: "음독명사"},
+            {kanji: "減少", reading: "げんしょう", meaning: "감소", category: "음독명사"},
+            {kanji: "見物", reading: "けんぶつ", meaning: "구경", category: "음독명사"},
+            {kanji: "原料", reading: "げんりょう", meaning: "원료", category: "음독명사"},
+            
+            // 훈독 명사
+            {kanji: "黄色", reading: "きいろ", meaning: "노랑", category: "훈독명사"},
+            {kanji: "傷", reading: "きず", meaning: "상처", category: "훈독명사"},
+            {kanji: "切手", reading: "きって", meaning: "우표", category: "훈독명사"},
+            {kanji: "切符", reading: "きっぷ", meaning: "표, 티켓", category: "훈독명사"},
+            {kanji: "気持ち", reading: "きもち", meaning: "마음, 기분, 감정", category: "훈독명사"},
+            {kanji: "着物", reading: "きもの", meaning: "옷, 기모노(일본 옷)", category: "훈독명사"},
+            {kanji: "具合", reading: "ぐあい", meaning: "형편, 상태", category: "훈독명사"},
+            {kanji: "草", reading: "くさ", meaning: "풀", category: "훈독명사"},
+            {kanji: "薬", reading: "くすり", meaning: "약", category: "훈독명사"},
+            {kanji: "くせ", reading: "くせ", meaning: "버릇", category: "훈독명사"},
+            {kanji: "果物", reading: "くだもの", meaning: "과일", category: "훈독명사"},
+            {kanji: "靴", reading: "くつ", meaning: "구두, 신발", category: "훈독명사"},
+            {kanji: "靴下", reading: "くつした", meaning: "양말", category: "훈독명사"},
+            {kanji: "首", reading: "くび", meaning: "목", category: "훈독명사"},
+            {kanji: "雲", reading: "くも", meaning: "구름", category: "훈독명사"},
+            {kanji: "今朝", reading: "けさ", meaning: "오늘 아침", category: "훈독명사"},
+            
+            // 동사
+            {kanji: "思い出す", reading: "おもいだす", meaning: "떠올리다", category: "동사"},
+            {kanji: "泳ぐ", reading: "およぐ", meaning: "헤엄치다", category: "동사"},
+            {kanji: "降りる", reading: "おりる", meaning: "(탈것에서) 내리다", category: "동사"},
+            {kanji: "折る", reading: "おる", meaning: "접다, 꺾다", category: "동사"},
+            {kanji: "折れる", reading: "おれる", meaning: "접히다, 꺾이다", category: "동사"},
+            {kanji: "終わる", reading: "おわる", meaning: "끝나다", category: "동사"},
+            {kanji: "買う", reading: "かう", meaning: "사다", category: "동사"},
+            {kanji: "返す", reading: "かえす", meaning: "되돌려주다", category: "동사"},
+            {kanji: "替える", reading: "かえる", meaning: "교환하다, 교체하다", category: "동사"},
+            {kanji: "帰る", reading: "かえる", meaning: "돌아가다, 돌아오다", category: "동사"},
+            {kanji: "変える", reading: "かえる", meaning: "바꾸다, 변경하다", category: "동사"},
+            {kanji: "輝く", reading: "かがやく", meaning: "빛나다, 반짝이다", category: "동사"},
+            {kanji: "掛かる", reading: "かかる", meaning: "걸리다", category: "동사"},
+            {kanji: "書く", reading: "かく", meaning: "쓰다", category: "동사"},
+            {kanji: "隠す", reading: "かくす", meaning: "숨기다", category: "동사"},
+            {kanji: "掛ける", reading: "かける", meaning: "걸다", category: "동사"},
+            {kanji: "駆ける", reading: "かける", meaning: "뛰다, 달리다", category: "동사"},
+            {kanji: "囲む", reading: "かこむ", meaning: "두르다, 둘러싸다", category: "동사"},
+            {kanji: "重なる", reading: "かさなる", meaning: "거듭되다, 반복되다", category: "동사"},
+            {kanji: "重ねる", reading: "かさねる", meaning: "거듭하다, 반복하다", category: "동사"},
+            {kanji: "飾る", reading: "かざる", meaning: "꾸미다, 장식하다", category: "동사"},
+            {kanji: "貸す", reading: "かす", meaning: "빌려주다", category: "동사"},
+            {kanji: "数える", reading: "かぞえる", meaning: "(수를) 세다", category: "동사"},
+            {kanji: "片付ける", reading: "かたづける", meaning: "정돈하다, 정리하다", category: "동사"},
+            {kanji: "勝つ", reading: "かつ", meaning: "이기다", category: "동사"},
+            {kanji: "被る", reading: "かぶる", meaning: "(모자 등을) 쓰다, 뒤집어쓰다", category: "동사"},
+            {kanji: "噛む", reading: "かむ", meaning: "씹다, 물다", category: "동사"},
+            {kanji: "通う", reading: "かよう", meaning: "다니다", category: "동사"},
+            {kanji: "借りる", reading: "かりる", meaning: "빌리다", category: "동사"},
+            {kanji: "枯れる", reading: "かれる", meaning: "(식물이) 마르다, 말라 죽다", category: "동사"},
+            {kanji: "かわいがる", reading: "かわいがる", meaning: "귀여워하다", category: "동사"},
+            {kanji: "乾く", reading: "かわく", meaning: "마르다, 건조하다", category: "동사"},
+            {kanji: "変わる", reading: "かわる", meaning: "바뀌다, 달라지다", category: "동사"},
+            
+            // い형용사
+            {kanji: "うらやましい", reading: "うらやましい", meaning: "부럽다", category: "い형용사"},
+            {kanji: "うるさい", reading: "うるさい", meaning: "시끄럽다", category: "い형용사"},
+            {kanji: "嬉しい", reading: "うれしい", meaning: "기쁘다", category: "い형용사"},
+            {kanji: "おいしい", reading: "おいしい", meaning: "맛있다", category: "い형용사"},
+            {kanji: "多い", reading: "おおい", meaning: "많다", category: "い형용사"},
+            {kanji: "おかしい", reading: "おかしい", meaning: "이상하다", category: "い형용사"},
+            {kanji: "おしい", reading: "おしい", meaning: "아깝다", category: "い형용사"},
+            {kanji: "遅い", reading: "おそい", meaning: "늦다", category: "い형용사"},
+            {kanji: "大人しい", reading: "おとなしい", meaning: "점잖다, 얌전하다", category: "い형용사"},
+            {kanji: "重い", reading: "おもい", meaning: "무겁다", category: "い형용사"},
+            {kanji: "面白い", reading: "おもしろい", meaning: "재미있다", category: "い형용사"},
+            {kanji: "固い", reading: "かたい", meaning: "딱딱하다, 단단하다", category: "い형용사"},
+            {kanji: "悲しい", reading: "かなしい", meaning: "슬프다", category: "い형용사"},
+            
+            // な형용사
+            {kanji: "危険だ", reading: "きけんだ", meaning: "위험하다", category: "な형용사"},
+            {kanji: "貴重だ", reading: "きちょうだ", meaning: "귀중하다", category: "な형용사"},
+            {kanji: "器用だ", reading: "きようだ", meaning: "솜씨가 좋다", category: "な형용사"},
+            {kanji: "嫌いだ", reading: "きらいだ", meaning: "싫어하다", category: "な형용사"},
+            {kanji: "結構だ", reading: "けっこうだ", meaning: "훌륭하다, 괜찮다", category: "な형용사"},
+            {kanji: "元気だ", reading: "げんきだ", meaning: "건강하다, 힘기차다", category: "な형용사"},
+            
+            // 부사 및 기타
+            {kanji: "きちんと", reading: "きちんと", meaning: "깔끔히, 정확히", category: "부사"},
+            {kanji: "ぎっしり", reading: "ぎっしり", meaning: "빽빽이", category: "부사"},
+            {kanji: "きっと", reading: "きっと", meaning: "꼭(영원, 확신), 분명, 틀림없이", category: "부사"},
+            {kanji: "急に", reading: "きゅうに", meaning: "갑자기", category: "부사"},
+            {kanji: "ぐっすり", reading: "ぐっすり", meaning: "푹", category: "부사"},
+            {kanji: "ぐったり", reading: "ぐったり", meaning: "녹초가 됨", category: "부사"},
+            {kanji: "けっして", reading: "けっして", meaning: "결코", category: "부사"},
+            {kanji: "こっそり", reading: "こっそり", meaning: "남몰래, 살짝", category: "부사"},
+            
+            // 가타카나어
+            {kanji: "カロリー", reading: "カロリー", meaning: "칼로리", category: "가타카나"},
+            {kanji: "カレンダー", reading: "カレンダー", meaning: "캘린더, 달력", category: "가타카나"},
+            {kanji: "キャンセル", reading: "キャンセル", meaning: "취소", category: "가타카나"},
+            {kanji: "キロ(グラム)", reading: "キロ(グラム)", meaning: "킬로그램", category: "가타카나"},
+            {kanji: "キロ(メートル)", reading: "キロ(メートル)", meaning: "킬로미터", category: "가타카나"},
+            {kanji: "ケーキ", reading: "ケーキ", meaning: "케이크", category: "가타카나"},
+            {kanji: "クーラー", reading: "クーラー", meaning: "쿨러, 냉방 장치", category: "가타카나"},
+            {kanji: "クラス", reading: "クラス", meaning: "클래스, 학급", category: "가타카나"},
+            {kanji: "グループ", reading: "グループ", meaning: "그룹, 모둠", category: "가타카나"},
+        ];
+
+        let currentIndex = 0;
+        let filteredWords = [...words];
+        let showReading = true;
+        let showMeaning = true;
+
+        function updateCard() {
+            const word = filteredWords[currentIndex];
+            document.getElementById('kanji').textContent = word.kanji;
+            document.getElementById('reading').textContent = word.reading;
+            document.getElementById('meaning').textContent = word.meaning;
+            document.getElementById('categoryTag').textContent = word.category;
+            document.getElementById('progress').textContent = `${currentIndex + 1} / ${filteredWords.length}`;
+            
+            applyVisibility();
+        }
+
+        function applyVisibility() {
+            document.getElementById('reading').className = showReading ? 'reading' : 'reading hidden';
+            document.getElementById('meaning').className = showMeaning ? 'meaning' : 'meaning hidden';
+        }
+
+        function toggleReading() {
+            showReading = !showReading;
+            const btn = document.getElementById('toggleReading');
+            btn.className = showReading ? 'toggle-btn active' : 'toggle-btn inactive';
+            btn.textContent = showReading ? '발음 표시' : '발음 숨김';
+            applyVisibility();
+        }
+
+        function toggleMeaning() {
+            showMeaning = !showMeaning;
+            const btn = document.getElementById('toggleMeaning');
+            btn.className = showMeaning ? 'toggle-btn active' : 'toggle-btn inactive';
+            btn.textContent = showMeaning ? '정답 표시' : '정답 숨김';
+            applyVisibility();
+        }
+
+        function revealAll() {
+            document.getElementById('reading').className = 'reading';
+            document.getElementById('meaning').className = 'meaning';
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % filteredWords.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + filteredWords.length) % filteredWords.length;
+            updateCard();
+        }
+
+        function changeCategory() {
+            const category = document.getElementById('categorySelect').value;
+            if (category === 'all') {
+                filteredWords = [...words];
+            } else {
+                filteredWords = words.filter(w => w.category === category);
+            }
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function shuffleCards() {
+            for (let i = filteredWords.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [filteredWords[i], filteredWords[j]] = [filteredWords[j], filteredWords[i]];
+            }
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function resetOrder() {
+            const category = document.getElementById('categorySelect').value;
+            if (category === 'all') {
+                filteredWords = [...words];
+            } else {
+                filteredWords = words.filter(w => w.category === category);
+            }
+            currentIndex = 0;
+            updateCard();
+        }
+
+        // 스와이프 지원
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    nextCard();
+                } else {
+                    prevCard();
+                }
+            }
+        }
+
+        // 키보드 지원
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') nextCard();
+            if (e.key === 'ArrowLeft') prevCard();
+            if (e.key === ' ') revealAll();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCard();
+        });
+    </script>
+</body>
+</html>
