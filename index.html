@@ -308,6 +308,13 @@
     // ===== 모달 연결 =====
     setupModal('btn-n3', 'backdrop', 'modal-n3', 'close-modal', () => loadChapters('n3'));
     setupModal('btn-n2', 'backdrop-n2', 'modal-n2', 'close-modal-n2', () => loadChapters('n2'));
+
+    // 해시로 진입 시 모달 자동 열기
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = location.hash;
+      if (hash === '#modal-n3') document.getElementById('btn-n3').click();
+      if (hash === '#modal-n2') document.getElementById('btn-n2').click();
+    });
   </script>
 </body>
 </html>
