@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>N3 단어장 Ch.1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared/flashcard.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html#modal-n3" class="home-btn">← 홈</a>
+            <h1>N3 단어장 Ch.1</h1>
+            <span class="progress" id="progress">1 / 100</span>
+        </header>
+        <select class="category-select" id="categorySelect" onchange="changeCategory()">
+            <option value="all">전체</option>
+            <option value="음독명사">음독 명사</option>
+            <option value="훈독명사">훈독 명사</option>
+            <option value="동사">동사</option>
+            <option value="い형용사">い형용사</option>
+            <option value="な형용사">な형용사</option>
+            <option value="부사">부사 및 기타</option>
+            <option value="가타카나">가타카나어</option>
+        </select>
+        <div class="card" id="card">
+            <span class="category-tag" id="categoryTag">명사</span>
+            <div class="kanji" id="kanji">漢字</div>
+            <div class="reading" id="reading">かんじ</div>
+            <div class="meaning" id="meaning">한자</div>
+        </div>
+        <div class="controls">
+            <button class="toggle-btn reset" onclick="resetOrder()">↺ 초기화</button>
+            <button class="toggle-btn shuffle" onclick="shuffleCards()">🔀 셔플</button>
+            <button class="toggle-btn active" id="toggleReading" onclick="toggleReading()">발음 표시</button>
+            <button class="toggle-btn active" id="toggleMeaning" onclick="toggleMeaning()">정답 표시</button>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn prev" onclick="prevCard()">◀ 이전</button>
+            <button class="nav-btn next" onclick="nextCard()">다음 ▶</button>
+        </div>
+        <p class="tap-hint">카드를 길게 누르면 정답 표시</p>
+    </div>
+    <script>
+        const STORAGE_KEY = 'n3_ch01_state';
+        const words = [
+            // 음독 명사
+            {kanji: "安心", reading: "あんしん", meaning: "안심", category: "음독명사"},
+            {kanji: "安定", reading: "あんてい", meaning: "안정", category: "음독명사"},
+            {kanji: "案内", reading: "あんない", meaning: "안내", category: "음독명사"},
+            {kanji: "以下", reading: "いか", meaning: "이하", category: "음독명사"},
+            {kanji: "以外", reading: "いがい", meaning: "이외", category: "음독명사"},
+            {kanji: "医学", reading: "いがく", meaning: "의학", category: "음독명사"},
+            {kanji: "意見", reading: "いけん", meaning: "의견", category: "음독명사"},
+            {kanji: "以後", reading: "いご", meaning: "이후(나중)", category: "음독명사"},
+            {kanji: "以降", reading: "いこう", meaning: "이후(since)", category: "음독명사"},
+            {kanji: "意志", reading: "いし", meaning: "의지", category: "음독명사"},
+            {kanji: "意識", reading: "いしき", meaning: "의식", category: "음독명사"},
+            {kanji: "医者", reading: "いしゃ", meaning: "의사", category: "음독명사"},
+            {kanji: "以上", reading: "いじょう", meaning: "이상", category: "음독명사"},
+            {kanji: "椅子", reading: "いす", meaning: "의자", category: "음독명사"},
+            {kanji: "以前", reading: "いぜん", meaning: "이전", category: "음독명사"},
+            {kanji: "位置", reading: "いち", meaning: "위치", category: "음독명사"},
+            {kanji: "一日", reading: "いちにち", meaning: "하루", category: "음독명사"},
+            {kanji: "一週間", reading: "いっしゅうかん", meaning: "일주일", category: "음독명사"},
+            {kanji: "一緒", reading: "いっしょ", meaning: "같음, 함께함", category: "음독명사"},
+            {kanji: "一杯", reading: "いっぱい", meaning: "한 잔", category: "음독명사"},
+            {kanji: "移転", reading: "いてん", meaning: "이전", category: "음독명사"},
+            {kanji: "以内", reading: "いない", meaning: "이내", category: "음독명사"},
+            {kanji: "意味", reading: "いみ", meaning: "의미", category: "음독명사"},
+            {kanji: "印象", reading: "いんしょう", meaning: "인상", category: "음독명사"},
+            {kanji: "右折", reading: "うせつ", meaning: "우회전", category: "음독명사"},
+            {kanji: "左折", reading: "させつ", meaning: "좌회전", category: "음독명사"},
+            {kanji: "運転", reading: "うんてん", meaning: "운전", category: "음독명사"},
+            {kanji: "運動", reading: "うんどう", meaning: "운동", category: "음독명사"},
+            {kanji: "映画", reading: "えいが", meaning: "영화", category: "음독명사"},
+            {kanji: "英語", reading: "えいご", meaning: "영어", category: "음독명사"},
+            {kanji: "栄養", reading: "えいよう", meaning: "영양", category: "음독명사"},
+            {kanji: "駅", reading: "えき", meaning: "역", category: "음독명사"},
+            {kanji: "延期", reading: "えんき", meaning: "연기", category: "음독명사"},
+            {kanji: "演奏", reading: "えんそう", meaning: "연주", category: "음독명사"},
+            {kanji: "鉛筆", reading: "えんぴつ", meaning: "연필", category: "음독명사"},
+            {kanji: "遠慮", reading: "えんりょ", meaning: "사양, 삼감", category: "음독명사"},
+            {kanji: "横断", reading: "おうだん", meaning: "횡단", category: "음독명사"},
+            {kanji: "応募", reading: "おうぼ", meaning: "응모", category: "음독명사"},
+            {kanji: "応用", reading: "おうよう", meaning: "응용", category: "음독명사"},
+            {kanji: "お菓子", reading: "おかし", meaning: "과자", category: "음독명사"},
+            {kanji: "屋上", reading: "おくじょう", meaning: "옥상", category: "음독명사"},
+            {kanji: "内側", reading: "うちがわ", meaning: "안쪽", category: "음독명사"},
+            {kanji: "腕", reading: "うで", meaning: "팔, 역량, 솜씨", category: "음독명사"},
+            {kanji: "売り場", reading: "うりば", meaning: "매장", category: "음독명사"},
+            {kanji: "上着", reading: "うわぎ", meaning: "상의", category: "음독명사"},
+            
+            // 훈독 명사
+            {kanji: "合図", reading: "あいず", meaning: "신호", category: "훈독명사"},
+            {kanji: "間", reading: "あいだ", meaning: "사이, 동안", category: "훈독명사"},
+            {kanji: "相手", reading: "あいて", meaning: "상대", category: "훈독명사"},
+            {kanji: "赤ん坊", reading: "あかんぼう", meaning: "아기", category: "훈독명사"},
+            {kanji: "朝", reading: "あさ", meaning: "아침", category: "훈독명사"},
+            {kanji: "味", reading: "あじ", meaning: "맛", category: "훈독명사"},
+            {kanji: "汗", reading: "あせ", meaning: "땀", category: "훈독명사"},
+            {kanji: "頭", reading: "あたま", meaning: "머리", category: "훈독명사"},
+            {kanji: "辺り", reading: "あたり", meaning: "주위, 주변, 즈음", category: "훈독명사"},
+            {kanji: "後", reading: "あと", meaning: "뒤, 후(시간)", category: "훈독명사"},
+            {kanji: "穴", reading: "あな", meaning: "구멍", category: "훈독명사"},
+            {kanji: "兄", reading: "あに", meaning: "형, 오빠", category: "훈독명사"},
+            {kanji: "姉", reading: "あね", meaning: "누나, 언니", category: "훈독명사"},
+            {kanji: "油", reading: "あぶら", meaning: "기름", category: "훈독명사"},
+            {kanji: "飴", reading: "あめ", meaning: "사탕", category: "훈독명사"},
+            {kanji: "息", reading: "いき", meaning: "숨", category: "훈독명사"},
+            {kanji: "池", reading: "いけ", meaning: "연못", category: "훈독명사"},
+            {kanji: "今ごろ", reading: "いまごろ", meaning: "지금쯤, 이맘때", category: "훈독명사"},
+            {kanji: "妹", reading: "いもうと", meaning: "여동생", category: "훈독명사"},
+            {kanji: "入り口", reading: "いりぐち", meaning: "입구", category: "훈독명사"},
+            {kanji: "岩", reading: "いわ", meaning: "바위", category: "훈독명사"},
+            {kanji: "受付", reading: "うけつけ", meaning: "접수", category: "훈독명사"},
+            {kanji: "後ろ", reading: "うしろ", meaning: "뒤, 뒤쪽", category: "훈독명사"},
+            {kanji: "嘘", reading: "うそ", meaning: "거짓말", category: "훈독명사"},
+            {kanji: "うわさ", reading: "うわさ", meaning: "소문", category: "훈독명사"},
+            {kanji: "絵", reading: "え", meaning: "그림", category: "훈독명사"},
+            {kanji: "笑顔", reading: "えがお", meaning: "웃는 얼굴", category: "훈독명사"},
+            {kanji: "枝", reading: "えだ", meaning: "가지", category: "훈독명사"},
+            {kanji: "お祝い", reading: "おいわい", meaning: "축하, 축하 선물", category: "훈독명사"},
+            {kanji: "奥さん", reading: "おくさん", meaning: "부인, 아주머니", category: "훈독명사"},
+            {kanji: "贈り物", reading: "おくりもの", meaning: "선물", category: "훈독명사"},
+            {kanji: "祝う", reading: "いわう", meaning: "축하하다", category: "훈독명사"},
+            {kanji: "贈る", reading: "おくる", meaning: "보내다, 선물하다", category: "훈독명사"},
+            
+            // 동사
+            {kanji: "会う", reading: "あう", meaning: "만나다", category: "동사"},
+            {kanji: "合う", reading: "あう", meaning: "맞다, 적합하다", category: "동사"},
+            {kanji: "上がる", reading: "あがる", meaning: "오르다, 올라가다", category: "동사"},
+            {kanji: "上げる", reading: "あげる", meaning: "올리다", category: "동사"},
+            {kanji: "あきる", reading: "あきる", meaning: "질리다", category: "동사"},
+            {kanji: "あきれる", reading: "あきれる", meaning: "기가 막히다, 질리다", category: "동사"},
+            {kanji: "空く", reading: "あく", meaning: "비다, 빈틈이 생기다", category: "동사"},
+            {kanji: "開く", reading: "あく", meaning: "열리다", category: "동사"},
+            {kanji: "開ける", reading: "あける", meaning: "열다", category: "동사"},
+            {kanji: "明ける", reading: "あける", meaning: "(기간이) 끝나다, 지나가다", category: "동사"},
+            {kanji: "憧れる", reading: "あこがれる", meaning: "동경하다", category: "동사"},
+            {kanji: "味わう", reading: "あじわう", meaning: "맛보다", category: "동사"},
+            {kanji: "預ける", reading: "あずける", meaning: "맡기다, 보관시키다", category: "동사"},
+            {kanji: "与える", reading: "あたえる", meaning: "주다, 부여하다", category: "동사"},
+            {kanji: "温める", reading: "あたためる", meaning: "데우다", category: "동사"},
+            {kanji: "当たる", reading: "あたる", meaning: "맞다, 해당하다", category: "동사"},
+            {kanji: "集まる", reading: "あつまる", meaning: "모이다", category: "동사"},
+            {kanji: "集める", reading: "あつめる", meaning: "모으다", category: "동사"},
+            {kanji: "浴びる", reading: "あびる", meaning: "끼얹다, 쐬다", category: "동사"},
+            {kanji: "溢れる", reading: "あふれる", meaning: "넘치다", category: "동사"},
+            {kanji: "あまる", reading: "あまる", meaning: "남다", category: "동사"},
+            {kanji: "編む", reading: "あむ", meaning: "엮다, 뜨다", category: "동사"},
+            {kanji: "謝る", reading: "あやまる", meaning: "사과하다", category: "동사"},
+            {kanji: "洗う", reading: "あらう", meaning: "씻다", category: "동사"},
+            {kanji: "改める", reading: "あらためる", meaning: "고치다, 개선하다", category: "동사"},
+            {kanji: "表す", reading: "あらわす", meaning: "나타내다", category: "동사"},
+            {kanji: "歩く", reading: "あるく", meaning: "걷다", category: "동사"},
+            {kanji: "生きる", reading: "いきる", meaning: "살다", category: "동사"},
+            {kanji: "いじめる", reading: "いじめる", meaning: "괴롭히다", category: "동사"},
+            {kanji: "急ぐ", reading: "いそぐ", meaning: "서두르다", category: "동사"},
+            {kanji: "痛がる", reading: "いたがる", meaning: "삽아파하다", category: "동사"},
+            {kanji: "祈る", reading: "いのる", meaning: "기도하다", category: "동사"},
+            {kanji: "居る", reading: "いる", meaning: "있다, 존재하다", category: "동사"},
+            {kanji: "要る", reading: "いる", meaning: "필요하다", category: "동사"},
+            {kanji: "入れる", reading: "いれる", meaning: "넣다", category: "동사"},
+            {kanji: "祝う", reading: "いわう", meaning: "축하하다", category: "동사"},
+            {kanji: "植える", reading: "うえる", meaning: "심다", category: "동사"},
+            {kanji: "受ける", reading: "うける", meaning: "받다", category: "동사"},
+            {kanji: "込む", reading: "こむ", meaning: "붐비다, 끼워넣다", category: "동사"},
+            
+            // い형용사
+            {kanji: "青い", reading: "あおい", meaning: "파랗다", category: "い형용사"},
+            {kanji: "赤い", reading: "あかい", meaning: "빨갛다", category: "い형용사"},
+            {kanji: "明るい", reading: "あかるい", meaning: "밝다", category: "い형용사"},
+            {kanji: "浅い", reading: "あさい", meaning: "얕다", category: "い형용사"},
+            {kanji: "暖かい", reading: "あたたかい", meaning: "(기온이) 따뜻하다", category: "い형용사"},
+            {kanji: "温かい", reading: "あたたかい", meaning: "(온도가) 따뜻하다", category: "い형용사"},
+            {kanji: "新しい", reading: "あたらしい", meaning: "새롭다", category: "い형용사"},
+            {kanji: "古い", reading: "ふるい", meaning: "낡다, 오래되다", category: "い형용사"},
+            {kanji: "暑い", reading: "あつい", meaning: "덥다", category: "い형용사"},
+            {kanji: "熱い", reading: "あつい", meaning: "뜨겁다", category: "い형용사"},
+            {kanji: "厚い", reading: "あつい", meaning: "두껍다", category: "い형용사"},
+            {kanji: "厚かましい", reading: "あつかましい", meaning: "뻔뻔하다", category: "い형용사"},
+            
+            // な형용사
+            {kanji: "明らかだ", reading: "あきらかだ", meaning: "분명하다, 명백하다", category: "な형용사"},
+            {kanji: "新ただ", reading: "あらただ", meaning: "새롭다", category: "な형용사"},
+            {kanji: "安全だ", reading: "あんぜんだ", meaning: "안전하다", category: "な형용사"},
+            {kanji: "意外だ", reading: "いがいだ", meaning: "의외이다, 뜻밖이다", category: "な형용사"},
+            {kanji: "偉大だ", reading: "いだいだ", meaning: "위대하다", category: "な형용사"},
+            {kanji: "一生懸命だ", reading: "いっしょうけんめいだ", meaning: "열심이다", category: "な형용사"},
+            {kanji: "一般的だ", reading: "いっぱんてきだ", meaning: "일반적이다", category: "な형용사"},
+            {kanji: "嫌だ", reading: "いやだ", meaning: "싫다", category: "な형용사"},
+            
+            // 부사 및 기타
+            {kanji: "相変わらず", reading: "あいかわらず", meaning: "여전히, 변함없이", category: "부사"},
+            {kanji: "あっさり", reading: "あっさり", meaning: "깨끗이, 담백히", category: "부사"},
+            {kanji: "あまり/あんまり", reading: "あまり", meaning: "별로, 그다지", category: "부사"},
+            {kanji: "あらゆる", reading: "あらゆる", meaning: "온갖, 모든", category: "부사"},
+            {kanji: "いちばん", reading: "いちばん", meaning: "가장, 제일, 최고임", category: "부사"},
+            {kanji: "いつも", reading: "いつも", meaning: "언제나, 늘", category: "부사"},
+            {kanji: "いまに", reading: "いまに", meaning: "머지않아, 곧", category: "부사"},
+            {kanji: "いよいよ", reading: "いよいよ", meaning: "점점, 드디어", category: "부사"},
+            {kanji: "いらいら", reading: "いらいら", meaning: "안절부절", category: "부사"},
+            {kanji: "いろいろ", reading: "いろいろ", meaning: "여러 가지, 다양한", category: "부사"},
+            
+            // 가타카나어
+            {kanji: "アイデア", reading: "アイデア", meaning: "아이디어", category: "가타카나"},
+            {kanji: "アクセサリー", reading: "アクセサリー", meaning: "액세서리", category: "가타카나"},
+            {kanji: "アドバイス", reading: "アドバイス", meaning: "어드바이스, 충고", category: "가타카나"},
+            {kanji: "アナウンサー", reading: "アナウンサー", meaning: "아나운서", category: "가타카나"},
+            {kanji: "アルコール", reading: "アルコール", meaning: "알코올, 술", category: "가타카나"},
+            {kanji: "アルバム", reading: "アルバム", meaning: "앨범", category: "가타카나"},
+        ];
+    </script>
+    <script src="../shared/flashcard.js"></script>
+</body>
+</html>
