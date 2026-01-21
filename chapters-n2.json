@@ -1,0 +1,13 @@
+
+[
+  { "title": "N2 - 챕터 01", "path": "n2/ch01.html", "available": false },
+  { "title": "N2 - 챕터 02", "path": "n2/ch02.html", "available": false },
+  { "title": "N2 - 챕터 03", "path": "n2/ch03.html", "available": false },
+  { "title": "N2 - 챕터 04", "path": "n2/ch04.html", "available": false },
+  { "title": "N2 - 챕터 05", "path": "n2/ch05.html", "available": false },
+  { "title": "N2 - 챕터 06", "path": "n2/ch06.html", "available": false },
+  { "title": "N2 - 챕터 07", "path": "n2/ch07.html", "available": false },
+  { "title": "N2 - 챕터 08", "path": "n2/ch08.html", "available": false },
+  { "title": "N2 - 챕터 09", "path": "n2/ch09.html", "available": false },
+  { "title": "N2 - 챕터 10", "path": "n2/ch10.html", "available": false }
+]
