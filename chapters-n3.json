@@ -1,13 +1,13 @@
 
 [
-  { "title": "N3 - 챕터 1", "path": "n3/ch01.html" },
-  { "title": "N3 - 챕터 2", "path": "n3/ch02.html" },
-  { "title": "N3 - 챕터 3", "path": "n3/ch03.html" },
-  { "title": "N3 - 챕터 4", "path": "n3/ch04.html" },
-  { "title": "N3 - 챕터 5", "path": "n3/ch05.html" },
-  { "title": "N3 - 챕터 6", "path": "n3/ch06.html" },
-  { "title": "N3 - 챕터 7", "path": "n3/ch07.html" },
-  { "title": "N3 - 챕터 8", "path": "n3/ch08.html" },
-  { "title": "N3 - 챕터 9", "path": "n3/ch09.html" },
-  { "title": "N3 - 챕터 10", "path": "n3/ch10.html" },
+  { "title": "N3 - 챕터 01", "path": "n3/ch01.html", "available": true },
+  { "title": "N3 - 챕터 02", "path": "n3/ch02.html", "available": true },
+  { "title": "N3 - 챕터 03", "path": "n3/ch03.html", "available": true },
+  { "title": "N3 - 챕터 04", "path": "n3/ch04.html", "available": true },
+  { "title": "N3 - 챕터 05", "path": "n3/ch05.html", "available": true },
+  { "title": "N3 - 챕터 06", "path": "n3/ch06.html", "available": false },
+  { "title": "N3 - 챕터 07", "path": "n3/ch07.html", "available": false },
+  { "title": "N3 - 챕터 08", "path": "n3/ch08.html", "available": false },
+  { "title": "N3 - 챕터 09", "path": "n3/ch09.html", "available": false },
+  { "title": "N3 - 챕터 10", "path": "n3/ch10.html", "available": false }
 ]
