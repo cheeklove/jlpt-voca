@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>JLPT 단어 암기</title>
+  <style>
+    :root {
+      --brand: #01AAAD;
+      --brand-dark: #018386;
+      --text: #222;
+      --muted: #6b7280;
+      --bg: #ffffff;
+    }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,Pretendard,sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 40px; }
+    h1 { font-size: 24px; margin: 0 0 12px; }
+    p.subtitle { color: var(--muted); margin: 0 0 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card-btn {
+      border: 2px solid var(--brand);
+      background: #fff; color: var(--brand); border-radius: 14px; padding: 18px 16px;
+      font-weight: 700; font-size: 18px; text-align: center; cursor: pointer;
+      transition: all .15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card-btn:hover { background: var(--brand); color: #fff; }
+    .card-btn:active { transform: scale(0.98); }
+    .card-btn.disabled, .card-btn[disabled] {
+      border-color: #d1d5db; color: #9ca3af; cursor: not-allowed; background: #f9fafb;
+    }
+    .hint { font-size: 12px; color: var(--muted); text-align:center; margin-top: 6px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: none; align-items: flex-end; /* 모바일 친화: 바텀시트 느낌 */
+    }
+    .modal {
+      width: 100%; max-width: 720px; margin: 0 auto; background: #fff; border-radius: 16px 16px 0 0;
+      padding: 16px; box-shadow: 0 -10px 30px rgba(0,0,0,.15);
+      transform: translateY(100%); transition: transform .2s ease;
+    }
+    .modal.open { transform: translateY(0); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; }
+    .modal-title { font-weight: 800; font-size: 18px; }
+    .modal-close { background:transparent; border:0; font-size: 22px; padding: 6px 10px; cursor: pointer; }
+    .modal-body { margin-top: 12px; }
+    .select {
+      width: 100%; padding: 14px 12px; border: 1.5px solid #d1d5db; border-radius: 12px; font-size: 16px;
+      background: #fff;
+    }
+    .go-btn {
+      margin-top: 12px; width: 100%; padding: 14px 12px; font-size: 16px; font-weight: 700;
+      background: var(--brand); color: #fff; border: 0; border-radius: 12px; cursor: pointer;
+    }
+    .go-btn:active { background: var(--brand-dark); }
+    .empty { padding: 14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; color:#475569; }
+    footer { margin-top: 36px; font-size: 12px; color: #94a3b8; text-align:center; }
+    @media (min-width: 640px) {
+      .modal-backdrop { align-items: center; }
+      .modal { border-radius: 16px; max-width: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>JLPT 단어 암기</h1>
+    <p class="subtitle">레벨을 선택하세요</p>
+
+    <div class="grid">
+      <!-- N3 -->
+      <button id="btn-n3" class="card-btn" aria-haspopup="dialog" aria-controls="modal-n3">N3</button>
+
+      <!-- N2: 아직 파일 없음 → 버튼은 비활성 -->
+      <button class="card-btn disabled" disabled title="준비 중">N2</button>
+    </div>
+    <div class="hint">※ N3는 챕터를 선택해 들어갈 수 있습니다. N2는 준비 중입니다.</div>
+
+    <footer>© JLPT Voca</footer>
+  </div>
+
+  <!-- N3 Modal -->
+  <div id="backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="title-n3">
+    <div id="modal-n3" class="modal" role="document">
+      <div class="modal-header">
+        <div id="title-n3" class="modal-title">N3 챕터 선택</div>
+        <button class="modal-close" aria-label="닫기" id="close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="n3-loader" class="empty">챕터 목록을 불러오는 중…</div>
+        <div id="n3-select-wrap" style="display:none;">
+          <select id="n3-select" class="select" aria-label="N3 챕터 목록"></select>
+          <button id="go-n3" class="go-btn">열기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 간단한 모달 제어
+    const backdrop = document.getElementById('backdrop');
+    const modal = document.getElementById('modal-n3');
+    const openBtn = document.getElementById('btn-n3');
+    const closeBtn = document.getElementById('close-modal');
+
+    const openModal = () => {
+      backdrop.style.display = 'flex';
+      setTimeout(()=> modal.classList.add('open'), 10);
+    };
+    const closeModal = () => {
+      modal.classList.remove('open');
+      setTimeout(()=> backdrop.style.display = 'none', 180);
+    };
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) closeModal();
+    });
+
+    // N3 챕터 목록 로드
+    const loader = document.getElementById('n3-loader');
+    const wrap = document.getElementById('n3-select-wrap');
+    const select = document.getElementById('n3-select');
+    const goBtn = document.getElementById('go-n3');
+
+    async function loadN3Chapters() {
+      try {
+        const res = await fetch('./chapters-n3.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('목록을 가져오지 못했습니다.');
+        const list = await res.json();
+
+        if (!Array.isArray(list) || list.length === 0) {
+          loader.textContent = '등록된 챕터가 없습니다. 리포지토리에 N3 파일을 추가해 주세요.';
+          return;
+        }
+        // 옵션 채우기
+        select.innerHTML = '';
+        list.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.path;
+          opt.textContent = item.title || item.path;
+          select.appendChild(opt);
+        });
+        loader.style.display = 'none';
+        wrap.style.display = 'block';
+      } catch (err) {
+        loader.textContent = '챕터 목록 로드 실패. 인터넷 연결 또는 chapters-n3.json 확인.';
+        console.error(err);
+      }
+    }
+
+    // 모달 열릴 때마다 최신 목록 시도 (모바일 캐시 고려)
+    openBtn.addEventListener('click', loadN3Chapters);
+
+    // 열기 버튼
+    goBtn.addEventListener('click', () => {
+      const url = select.value;
+      if (url) {
+        window.location.href = url; // 같은 탭 이동
+      }
+    });
+
+    // 접근성: ESC 닫기
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && backdrop.style.display === 'flex') {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>
