@@ -150,33 +150,69 @@
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script>
+  <script>    
     // ===== 공통 모달 유틸 =====
     function setupModal(openBtnId, backdropId, modalId, closeBtnId, onOpen) {
       const openBtn = document.getElementById(openBtnId);
       const backdrop = document.getElementById(backdropId);
       const modal = document.getElementById(modalId);
       const closeBtn = document.getElementById(closeBtnId);
-
+    
+      let isOpen = false;
+      const modalKey = modalId; // 'modal-n3' 또는 'modal-n2'
+    
       const openModal = () => {
+        if (isOpen) return;
+        isOpen = true;
         backdrop.style.display = 'flex';
         requestAnimationFrame(() => modal.classList.add('open'));
+        // 히스토리에 '모달 상태' 푸시 (뒤로가기를 누르면 popstate 발생)
+        history.pushState({ modal: modalKey }, '', `#${modalKey}`);
         if (typeof onOpen === 'function') onOpen();
       };
-      const closeModal = () => {
+    
+      const closeModal = (fromPopState = false) => {
+        if (!isOpen) return;
+        isOpen = false;
         modal.classList.remove('open');
         setTimeout(()=> backdrop.style.display = 'none', 180);
+        // 사용자가 X 버튼/배경 클릭으로 닫았으면, 우리가 쌓은 히스토리를 되돌려 UX를 정리
+        if (!fromPopState) {
+          // 현재 히스토리가 모달 상태라면 한 단계 뒤로
+          if (history.state && history.state.modal === modalKey) {
+            history.back(); // 이때 다시 popstate가 오지만, 아래 핸들러에서 isOpen=false라 영향 없음
+          }
+        }
       };
-
+    
       openBtn.addEventListener('click', openModal);
-      closeBtn.addEventListener('click', closeModal);
-      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+      closeBtn.addEventListener('click', () => closeModal(false));
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(false); });
+    
+      // ESC
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && backdrop.style.display === 'flex') closeModal();
+        if (e.key === 'Escape' && isOpen) closeModal(false);
       });
-
-      return { openModal, closeModal };
+    
+      // 전역 popstate에 반응하도록 리스너 등록
+      window.__modalHandlers = window.__modalHandlers || {};
+      window.__modalHandlers[modalKey] = { closeModal, isOpen: () => isOpen };
+    
+      return { openModal, closeModal, isOpen: () => isOpen };
     }
+    
+    // 전역 popstate: 뒤로가기가 눌리면 '열린' 모달을 닫는다
+    window.addEventListener('popstate', (ev) => {
+      const handlers = window.__modalHandlers || {};
+      // 어떤 모달이 열려있든 우선 닫기
+      for (const key of Object.keys(handlers)) {
+        if (handlers[key].isOpen()) {
+          handlers[key].closeModal(true); // popstate 기원으로 닫음
+          return; // 하나만 닫고 종료
+        }
+      }
+      // 모달이 열려 있지 않으면 기본 동작(페이지 뒤로가기)을 따름
+    });
 
     // ===== 토스트 =====
     const toast = document.getElementById('toast');
