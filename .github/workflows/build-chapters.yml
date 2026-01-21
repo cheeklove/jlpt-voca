@@ -1,0 +1,37 @@
+
+name: Build chapters JSON
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write  # 자동 커밋을 위해 필요
+
+jobs:
+  build-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate chapters JSON
+        run: node scripts/generate-chapters.mjs
+
+      - name: Commit & push if changed
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add chapters-n2.json chapters-n3.json
+            git commit -m "chore: auto-generate chapters JSON"
+            git push
+          else
+            echo "No changes to commit."
+          fi
