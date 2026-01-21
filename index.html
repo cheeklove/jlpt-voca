@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>JLPT 단어 암기</title>
+  <meta name="theme-color" content="#01AAAD" />
   <style>
     :root {
       --brand: #01AAAD;
@@ -15,11 +15,17 @@
       --disabled: #9ca3af;
       --border: #d1d5db;
     }
-    html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,Pretendard,sans-serif; }
+    /* Base */
+    html, body {
+      margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,Pretendard,sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
     .wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 40px; }
     h1 { font-size: 24px; margin: 0 0 12px; }
     p.subtitle { color: var(--muted); margin: 0 0 24px; }
+
+    /* Level buttons */
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .card-btn {
       border: 2px solid var(--brand);
@@ -29,15 +35,12 @@
     }
     .card-btn:hover { background: var(--brand); color: #fff; }
     .card-btn:active { transform: scale(0.98); }
-    .card-btn.disabled, .card-btn[disabled] {
-      border-color: #d1d5db; color: #9ca3af; cursor: not-allowed; background: #f9fafb;
-    }
     .hint { font-size: 12px; color: var(--muted); text-align:center; margin-top: 6px; }
 
-    /* Modal */
+    /* Modal (bottom sheet on mobile) */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.45);
-      display: none; align-items: flex-end;
+      display: none; align-items: flex-end; z-index: 40;
     }
     .modal {
       width: 100%; max-width: 720px; margin: 0 auto; background: #fff; border-radius: 16px 16px 0 0;
@@ -55,7 +58,7 @@
     .chap-item {
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 12px; background:#fff;
-      cursor: pointer;
+      cursor: pointer; text-align:left;
     }
     .chap-item:hover { border-color: var(--brand); }
     .chap-item .title { font-weight: 700; }
@@ -68,7 +71,10 @@
       cursor: not-allowed; opacity:.6; filter: grayscale(.1);
     }
     .chap-item.disabled .badge { color: var(--disabled); border-color:#e5e7eb; background:#f3f4f6; }
-    .empty { padding: 14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; color:#475569; }
+
+    .empty {
+      padding: 14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; color:#475569;
+    }
 
     /* Toast */
     .toast {
@@ -78,6 +84,7 @@
     }
 
     footer { margin-top: 36px; font-size: 12px; color: #94a3b8; text-align:center; }
+
     @media (min-width: 640px) {
       .modal-backdrop { align-items: center; }
       .modal { border-radius: 16px; max-width: 520px; }
@@ -92,11 +99,10 @@
     <div class="grid">
       <!-- N3 -->
       <button id="btn-n3" class="card-btn" aria-haspopup="dialog" aria-controls="modal-n3">N3</button>
-
-      <!-- N2: 아직 파일 없음 → 비활성 -->
-      <button class="card-btn disabled" disabled title="준비 중">N2</button>
+      <!-- N2 활성화 -->
+      <button id="btn-n2" class="card-btn" aria-haspopup="dialog" aria-controls="modal-n2">N2</button>
     </div>
-    <div class="hint">※ N3는 챕터를 선택해 들어갈 수 있습니다. N2는 준비 중입니다.</div>
+    <div class="hint">※ 각 레벨을 선택하면 챕터를 고를 수 있습니다. 파일이 없을 경우 안내가 표시됩니다.</div>
 
     <footer>© JLPT Voca</footer>
   </div>
@@ -115,28 +121,50 @@
     </div>
   </div>
 
+  <!-- N2 Modal -->
+  <div id="backdrop-n2" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="title-n2">
+    <div id="modal-n2" class="modal" role="document">
+      <div class="modal-header">
+        <div id="title-n2" class="modal-title">N2 챕터 선택</div>
+        <button class="modal-close" aria-label="닫기" id="close-modal-n2">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="n2-loader" class="empty">챕터 목록을 불러오는 중…</div>
+        <div id="n2-list" class="chap-list" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // ===== 모달 제어 =====
-    const backdrop = document.getElementById('backdrop');
-    const modal = document.getElementById('modal-n3');
-    const openBtn = document.getElementById('btn-n3');
-    const closeBtn = document.getElementById('close-modal');
+    // ===== 공통 모달 유틸 =====
+    function setupModal(openBtnId, backdropId, modalId, closeBtnId, onOpen) {
+      const openBtn = document.getElementById(openBtnId);
+      const backdrop = document.getElementById(backdropId);
+      const modal = document.getElementById(modalId);
+      const closeBtn = document.getElementById(closeBtnId);
 
-    const openModal = () => {
-      backdrop.style.display = 'flex';
-      setTimeout(()=> modal.classList.add('open'), 10);
-    };
-    const closeModal = () => {
-      modal.classList.remove('open');
-      setTimeout(()=> backdrop.style.display = 'none', 180);
-    };
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && backdrop.style.display === 'flex') closeModal(); });
+      const openModal = () => {
+        backdrop.style.display = 'flex';
+        requestAnimationFrame(() => modal.classList.add('open'));
+        if (typeof onOpen === 'function') onOpen();
+      };
+      const closeModal = () => {
+        modal.classList.remove('open');
+        setTimeout(()=> backdrop.style.display = 'none', 180);
+      };
+
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && backdrop.style.display === 'flex') closeModal();
+      });
+
+      return { openModal, closeModal };
+    }
 
     // ===== 토스트 =====
     const toast = document.getElementById('toast');
@@ -147,20 +175,13 @@
       showToast._t = setTimeout(()=> toast.style.display = 'none', ms);
     }
 
-    // ===== 챕터 목록 로드/렌더 =====
-    const loader = document.getElementById('n3-loader');
-    const listEl = document.getElementById('n3-list');
-
-    let n3Cache = null; // 모달 열 때마다 새로 fetch 하되, 실패 시 캐시 재사용 가능하도록 남김
-
+    // ===== 데이터 유틸 =====
     async function fetchJSON(url) {
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error('목록을 가져오지 못했습니다.');
       return res.json();
     }
-
     async function checkExists(url) {
-      // 실제 파일 존재 여부 확인 (HEAD로 빠른 체크)
       try {
         const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
         return res.ok;
@@ -169,12 +190,12 @@
       }
     }
 
-    function renderList(items) {
+    function renderList(items, listEl) {
       listEl.innerHTML = '';
       items.forEach((item, idx) => {
         const row = document.createElement('button');
         row.className = 'chap-item';
-        row.setAttribute('type', 'button');
+        row.type = 'button';
 
         const left = document.createElement('div');
         const title = document.createElement('div');
@@ -188,7 +209,6 @@
 
         const badge = document.createElement('div');
         badge.className = 'badge';
-
         if (item.available === false) {
           row.classList.add('disabled');
           row.setAttribute('aria-disabled', 'true');
@@ -201,13 +221,12 @@
         row.appendChild(left);
         row.appendChild(badge);
 
-        // 클릭 핸들러
         row.addEventListener('click', async () => {
           if (row.classList.contains('disabled')) {
             showToast('아직 업로드되지 않았습니다');
             return;
           }
-          // 실제 파일 존재 여부 최종 확인
+          // 실제 파일 존재 여부 확인
           const ok = await checkExists(item.path);
           if (!ok) {
             showToast('파일이 아직 업로드되지 않았습니다');
@@ -220,36 +239,31 @@
       });
     }
 
-    async function loadN3Chapters() {
+    async function loadChapters(level) {
+      const loader = document.getElementById(`${level}-loader`);
+      const listEl = document.getElementById(`${level}-list`);
       loader.style.display = 'block';
       listEl.style.display = 'none';
       loader.textContent = '챕터 목록을 불러오는 중…';
+
       try {
-        const data = await fetchJSON('./chapters-n3.json');
-        n3Cache = data;
+        const data = await fetchJSON(`./chapters-${level}.json`);
         if (!Array.isArray(data) || data.length === 0) {
-          loader.textContent = '등록된 챕터가 없습니다. chapters-n3.json을 확인하세요.';
+          loader.textContent = `등록된 챕터가 없습니다. chapters-${level}.json을 확인하세요.`;
           return;
         }
-        renderList(data);
+        renderList(data, listEl);
         loader.style.display = 'none';
         listEl.style.display = 'flex';
       } catch (err) {
         console.error(err);
-        if (n3Cache) {
-          // 이전 캐시라도 보여주기
-          renderList(n3Cache);
-          loader.style.display = 'none';
-          listEl.style.display = 'flex';
-          showToast('네트워크 오류: 이전 목록으로 표시합니다');
-        } else {
-          loader.textContent = '챕터 목록 로드 실패. 인터넷 연결 또는 chapters-n3.json 확인.';
-        }
+        loader.textContent = `챕터 목록 로드 실패. 인터넷 연결 또는 chapters-${level}.json 확인.`;
       }
     }
 
-    // 모달 열릴 때마다 최신 목록 시도 (모바일 캐시 고려)
-    openBtn.addEventListener('click', loadN3Chapters);
+    // ===== 모달 연결 =====
+    setupModal('btn-n3', 'backdrop', 'modal-n3', 'close-modal', () => loadChapters('n3'));
+    setupModal('btn-n2', 'backdrop-n2', 'modal-n2', 'close-modal-n2', () => loadChapters('n2'));
   </script>
 </body>
 </html>
