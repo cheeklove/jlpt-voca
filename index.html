@@ -12,8 +12,11 @@
       --text: #222;
       --muted: #6b7280;
       --bg: #ffffff;
+      --disabled: #9ca3af;
+      --border: #d1d5db;
     }
-    html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,Pretendard,sans-serif; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,Pretendard,sans-serif; }
     .wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 40px; }
     h1 { font-size: 24px; margin: 0 0 12px; }
     p.subtitle { color: var(--muted); margin: 0 0 24px; }
@@ -22,8 +25,7 @@
       border: 2px solid var(--brand);
       background: #fff; color: var(--brand); border-radius: 14px; padding: 18px 16px;
       font-weight: 700; font-size: 18px; text-align: center; cursor: pointer;
-      transition: all .15s ease;
-      -webkit-tap-highlight-color: transparent;
+      transition: all .15s ease; -webkit-tap-highlight-color: transparent;
     }
     .card-btn:hover { background: var(--brand); color: #fff; }
     .card-btn:active { transform: scale(0.98); }
@@ -35,7 +37,7 @@
     /* Modal */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.45);
-      display: none; align-items: flex-end; /* 모바일 친화: 바텀시트 느낌 */
+      display: none; align-items: flex-end;
     }
     .modal {
       width: 100%; max-width: 720px; margin: 0 auto; background: #fff; border-radius: 16px 16px 0 0;
@@ -47,20 +49,38 @@
     .modal-title { font-weight: 800; font-size: 18px; }
     .modal-close { background:transparent; border:0; font-size: 22px; padding: 6px 10px; cursor: pointer; }
     .modal-body { margin-top: 12px; }
-    .select {
-      width: 100%; padding: 14px 12px; border: 1.5px solid #d1d5db; border-radius: 12px; font-size: 16px;
-      background: #fff;
+
+    /* Chapter list */
+    .chap-list { display:flex; flex-direction:column; gap:10px; margin-top: 6px; }
+    .chap-item {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border: 1.5px solid var(--border); border-radius: 12px; padding: 14px 12px; background:#fff;
+      cursor: pointer;
     }
-    .go-btn {
-      margin-top: 12px; width: 100%; padding: 14px 12px; font-size: 16px; font-weight: 700;
-      background: var(--brand); color: #fff; border: 0; border-radius: 12px; cursor: pointer;
+    .chap-item:hover { border-color: var(--brand); }
+    .chap-item .title { font-weight: 700; }
+    .chap-item .meta { font-size: 12px; color: var(--muted); }
+    .chap-item .badge {
+      font-size: 12px; padding: 4px 8px; border-radius: 999px; border:1px solid var(--border);
+      color:#475569; background:#f8fafc; white-space:nowrap;
     }
-    .go-btn:active { background: var(--brand-dark); }
+    .chap-item.disabled {
+      cursor: not-allowed; opacity:.6; filter: grayscale(.1);
+    }
+    .chap-item.disabled .badge { color: var(--disabled); border-color:#e5e7eb; background:#f3f4f6; }
     .empty { padding: 14px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; color:#475569; }
+
+    /* Toast */
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: rgba(0,0,0,.82); color:#fff; padding: 10px 14px; border-radius: 10px;
+      font-size: 14px; z-index: 50; display:none;
+    }
+
     footer { margin-top: 36px; font-size: 12px; color: #94a3b8; text-align:center; }
     @media (min-width: 640px) {
       .modal-backdrop { align-items: center; }
-      .modal { border-radius: 16px; max-width: 480px; }
+      .modal { border-radius: 16px; max-width: 520px; }
     }
   </style>
 </head>
@@ -73,7 +93,7 @@
       <!-- N3 -->
       <button id="btn-n3" class="card-btn" aria-haspopup="dialog" aria-controls="modal-n3">N3</button>
 
-      <!-- N2: 아직 파일 없음 → 버튼은 비활성 -->
+      <!-- N2: 아직 파일 없음 → 비활성 -->
       <button class="card-btn disabled" disabled title="준비 중">N2</button>
     </div>
     <div class="hint">※ N3는 챕터를 선택해 들어갈 수 있습니다. N2는 준비 중입니다.</div>
@@ -90,16 +110,16 @@
       </div>
       <div class="modal-body">
         <div id="n3-loader" class="empty">챕터 목록을 불러오는 중…</div>
-        <div id="n3-select-wrap" style="display:none;">
-          <select id="n3-select" class="select" aria-label="N3 챕터 목록"></select>
-          <button id="go-n3" class="go-btn">열기</button>
-        </div>
+        <div id="n3-list" class="chap-list" style="display:none;"></div>
       </div>
     </div>
   </div>
 
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <script>
-    // 간단한 모달 제어
+    // ===== 모달 제어 =====
     const backdrop = document.getElementById('backdrop');
     const modal = document.getElementById('modal-n3');
     const openBtn = document.getElementById('btn-n3');
@@ -115,59 +135,121 @@
     };
     openBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) closeModal();
-    });
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && backdrop.style.display === 'flex') closeModal(); });
 
-    // N3 챕터 목록 로드
+    // ===== 토스트 =====
+    const toast = document.getElementById('toast');
+    function showToast(msg, ms = 1800) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.style.display = 'none', ms);
+    }
+
+    // ===== 챕터 목록 로드/렌더 =====
     const loader = document.getElementById('n3-loader');
-    const wrap = document.getElementById('n3-select-wrap');
-    const select = document.getElementById('n3-select');
-    const goBtn = document.getElementById('go-n3');
+    const listEl = document.getElementById('n3-list');
+
+    let n3Cache = null; // 모달 열 때마다 새로 fetch 하되, 실패 시 캐시 재사용 가능하도록 남김
+
+    async function fetchJSON(url) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('목록을 가져오지 못했습니다.');
+      return res.json();
+    }
+
+    async function checkExists(url) {
+      // 실제 파일 존재 여부 확인 (HEAD로 빠른 체크)
+      try {
+        const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        return res.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function renderList(items) {
+      listEl.innerHTML = '';
+      items.forEach((item, idx) => {
+        const row = document.createElement('button');
+        row.className = 'chap-item';
+        row.setAttribute('type', 'button');
+
+        const left = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = item.title || `챕터 ${idx+1}`;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = item.path;
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+
+        if (item.available === false) {
+          row.classList.add('disabled');
+          row.setAttribute('aria-disabled', 'true');
+          row.title = '아직 업로드되지 않았습니다';
+          badge.textContent = '잠김';
+        } else {
+          badge.textContent = '열기';
+        }
+
+        row.appendChild(left);
+        row.appendChild(badge);
+
+        // 클릭 핸들러
+        row.addEventListener('click', async () => {
+          if (row.classList.contains('disabled')) {
+            showToast('아직 업로드되지 않았습니다');
+            return;
+          }
+          // 실제 파일 존재 여부 최종 확인
+          const ok = await checkExists(item.path);
+          if (!ok) {
+            showToast('파일이 아직 업로드되지 않았습니다');
+            return;
+          }
+          window.location.href = item.path;
+        });
+
+        listEl.appendChild(row);
+      });
+    }
 
     async function loadN3Chapters() {
+      loader.style.display = 'block';
+      listEl.style.display = 'none';
+      loader.textContent = '챕터 목록을 불러오는 중…';
       try {
-        const res = await fetch('./chapters-n3.json', { cache: 'no-store' });
-        if (!res.ok) throw new Error('목록을 가져오지 못했습니다.');
-        const list = await res.json();
-
-        if (!Array.isArray(list) || list.length === 0) {
-          loader.textContent = '등록된 챕터가 없습니다. 리포지토리에 N3 파일을 추가해 주세요.';
+        const data = await fetchJSON('./chapters-n3.json');
+        n3Cache = data;
+        if (!Array.isArray(data) || data.length === 0) {
+          loader.textContent = '등록된 챕터가 없습니다. chapters-n3.json을 확인하세요.';
           return;
         }
-        // 옵션 채우기
-        select.innerHTML = '';
-        list.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item.path;
-          opt.textContent = item.title || item.path;
-          select.appendChild(opt);
-        });
+        renderList(data);
         loader.style.display = 'none';
-        wrap.style.display = 'block';
+        listEl.style.display = 'flex';
       } catch (err) {
-        loader.textContent = '챕터 목록 로드 실패. 인터넷 연결 또는 chapters-n3.json 확인.';
         console.error(err);
+        if (n3Cache) {
+          // 이전 캐시라도 보여주기
+          renderList(n3Cache);
+          loader.style.display = 'none';
+          listEl.style.display = 'flex';
+          showToast('네트워크 오류: 이전 목록으로 표시합니다');
+        } else {
+          loader.textContent = '챕터 목록 로드 실패. 인터넷 연결 또는 chapters-n3.json 확인.';
+        }
       }
     }
 
     // 모달 열릴 때마다 최신 목록 시도 (모바일 캐시 고려)
     openBtn.addEventListener('click', loadN3Chapters);
-
-    // 열기 버튼
-    goBtn.addEventListener('click', () => {
-      const url = select.value;
-      if (url) {
-        window.location.href = url; // 같은 탭 이동
-      }
-    });
-
-    // 접근성: ESC 닫기
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && backdrop.style.display === 'flex') {
-        closeModal();
-      }
-    });
   </script>
 </body>
 </html>
