@@ -76,15 +76,6 @@ function createCardButtons() {
     card.appendChild(editBtn);
 }
 
-let currentIndex = 0;
-let filteredWords = [...words];
-let showReading = true;
-let showMeaning = true;
-let currentCategory = 'all';
-let isNavigating = false;
-let longPressTimer = null;
-let isLongPress = false;
-
 function saveState() {
     const state = { currentIndex, showReading, showMeaning, currentCategory };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
