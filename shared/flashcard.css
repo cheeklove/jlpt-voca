@@ -12,11 +12,7 @@ h1 { font-size: 1.3rem; margin: 0; color: #fff; }
 .toggle-btn.shuffle { background: #805ad5; color: #fff; }
 .toggle-btn.reset { background: #dd6b20; color: #fff; }
 .category-select { width: 100%; padding: 10px; border: none; border-radius: 10px; background: #2d3748; color: #fff; font-size: 0.95rem; margin-bottom: 12px; }
-.card { background: linear-gradient(145deg, #16213e, #1a1a2e); border-radius: 16px; padding: 28px 20px; min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 16px; border: 1px solid #2d3748; position: relative; }
-.card-btn { position: absolute; padding: 4px 8px; font-size: 0.7rem; background: rgba(255,255,255,0.1); color: #888; border: none; border-radius: 4px; cursor: pointer; }
-.card-btn:active { background: rgba(255,255,255,0.2); }
-.btn-copy { top: 10px; right: 10px; }
-.btn-edit { bottom: 10px; right: 10px; }
+.card { background: linear-gradient(145deg, #16213e, #1a1a2e); border-radius: 16px; padding: 28px 20px; min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 16px; border: 1px solid #2d3748; }
 .kanji { font-family: 'Noto Sans JP', sans-serif; font-size: 3rem; font-weight: bold; color: #fff; margin-bottom: 16px; text-align: center; line-height: 1.3; }
 .reading { font-family: 'Noto Sans JP', sans-serif; font-size: 1.4rem; color: #63b3ed; margin-bottom: 20px; text-align: center; }
 .meaning { font-size: 1.5rem; color: #68d391; text-align: center; padding: 12px 20px; background: rgba(104, 211, 145, 0.1); border-radius: 10px; }
