@@ -1,6 +1,81 @@
 // flashcard.js - 공통 플래시카드 로직
 // 사용법: HTML에서 words 배열과 STORAGE_KEY를 먼저 정의한 후 이 스크립트 로드
 
+const EDITS_KEY = STORAGE_KEY.replace('_state', '_edits');
+
+let currentIndex = 0;
+let filteredWords = [...words];
+let showReading = true;
+let showMeaning = true;
+let currentCategory = 'all';
+let isNavigating = false;
+let longPressTimer = null;
+let isLongPress = false;
+let meaningEdits = {};
+
+function loadEdits() {
+    const saved = localStorage.getItem(EDITS_KEY);
+    if (saved) {
+        meaningEdits = JSON.parse(saved);
+    }
+}
+
+function saveEdits() {
+    localStorage.setItem(EDITS_KEY, JSON.stringify(meaningEdits));
+}
+
+function getMeaning(word) {
+    const key = word.kanji + '_' + word.reading;
+    return meaningEdits[key] || word.meaning;
+}
+
+function setMeaning(word, newMeaning) {
+    const key = word.kanji + '_' + word.reading;
+    if (newMeaning === word.meaning) {
+        delete meaningEdits[key];
+    } else {
+        meaningEdits[key] = newMeaning;
+    }
+    saveEdits();
+}
+
+function copyKanji() {
+    const word = filteredWords[currentIndex];
+    navigator.clipboard.writeText(word.kanji).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        const original = btn.textContent;
+        btn.textContent = '완료';
+        setTimeout(() => { btn.textContent = original; }, 1000);
+    });
+}
+
+function editMeaning() {
+    const word = filteredWords[currentIndex];
+    const currentMeaning = getMeaning(word);
+    const newMeaning = prompt('뜻 수정:', currentMeaning);
+    if (newMeaning !== null && newMeaning.trim() !== '') {
+        setMeaning(word, newMeaning.trim());
+        updateCard();
+    }
+}
+
+function createCardButtons() {
+    const card = document.getElementById('card');
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'card-btn btn-copy';
+    copyBtn.textContent = '복사';
+    copyBtn.onclick = function(e) { e.stopPropagation(); copyKanji(); };
+    
+    const editBtn = document.createElement('button');
+    editBtn.className = 'card-btn btn-edit';
+    editBtn.textContent = '수정';
+    editBtn.onclick = function(e) { e.stopPropagation(); editMeaning(); };
+    
+    card.appendChild(copyBtn);
+    card.appendChild(editBtn);
+}
+
 let currentIndex = 0;
 let filteredWords = [...words];
 let showReading = true;
@@ -45,7 +120,7 @@ function updateCard() {
     const word = filteredWords[currentIndex];
     document.getElementById('kanji').textContent = word.kanji;
     document.getElementById('reading').textContent = word.reading;
-    document.getElementById('meaning').textContent = word.meaning;
+    document.getElementById('meaning').textContent = getMeaning(word);
     document.getElementById('categoryTag').textContent = word.category;
     document.getElementById('progress').textContent = `${currentIndex + 1} / ${filteredWords.length}`;
     applyVisibility();
@@ -181,6 +256,8 @@ document.addEventListener('keyup', e => {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    loadEdits();
+    createCardButtons();
     loadState();
     updateCard();
 });
