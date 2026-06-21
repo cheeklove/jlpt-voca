@@ -9,6 +9,77 @@ let currentCategory = 'all';
 let isNavigating = false;
 let longPressTimer = null;
 let isLongPress = false;
+let meaningEdits = {};
+
+const EDITS_KEY = STORAGE_KEY.replace('_state', '_edits');
+
+function loadEdits() {
+    try {
+        const saved = localStorage.getItem(EDITS_KEY);
+        if (saved) meaningEdits = JSON.parse(saved);
+    } catch(e) {}
+}
+
+function saveEdits() {
+    localStorage.setItem(EDITS_KEY, JSON.stringify(meaningEdits));
+}
+
+function getMeaning(word) {
+    const key = word.kanji + '_' + word.reading;
+    return meaningEdits[key] || word.meaning;
+}
+
+function setMeaning(word, newMeaning) {
+    const key = word.kanji + '_' + word.reading;
+    if (newMeaning === word.meaning) {
+        delete meaningEdits[key];
+    } else {
+        meaningEdits[key] = newMeaning;
+    }
+    saveEdits();
+}
+
+function copyKanji() {
+    const word = filteredWords[currentIndex];
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(word.kanji);
+    }
+}
+
+function editMeaning() {
+    const word = filteredWords[currentIndex];
+    const currentMeaning = getMeaning(word);
+    const newMeaning = prompt('뜻 수정:', currentMeaning);
+    if (newMeaning !== null && newMeaning.trim() !== '') {
+        setMeaning(word, newMeaning.trim());
+        updateCard();
+    }
+}
+
+function setupButtons() {
+    // 초기화, 셔플 버튼 텍스트를 아이콘만으로 변경
+    const resetBtn = document.querySelector('.toggle-btn.reset');
+    const shuffleBtn = document.querySelector('.toggle-btn.shuffle');
+    if (resetBtn) resetBtn.textContent = '↺';
+    if (shuffleBtn) shuffleBtn.textContent = '🔀';
+    
+    // 복사, 수정 버튼 추가
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'toggle-btn copy';
+        copyBtn.textContent = '📋';
+        copyBtn.onclick = copyKanji;
+        
+        const editBtn = document.createElement('button');
+        editBtn.className = 'toggle-btn edit';
+        editBtn.textContent = '✏️';
+        editBtn.onclick = editMeaning;
+        
+        controls.appendChild(copyBtn);
+        controls.appendChild(editBtn);
+    }
+}
 
 function saveState() {
     const state = { currentIndex, showReading, showMeaning, currentCategory };
@@ -45,7 +116,7 @@ function updateCard() {
     const word = filteredWords[currentIndex];
     document.getElementById('kanji').textContent = word.kanji;
     document.getElementById('reading').textContent = word.reading;
-    document.getElementById('meaning').textContent = word.meaning;
+    document.getElementById('meaning').textContent = getMeaning(word);
     document.getElementById('categoryTag').textContent = word.category;
     document.getElementById('progress').textContent = `${currentIndex + 1} / ${filteredWords.length}`;
     applyVisibility();
@@ -181,6 +252,8 @@ document.addEventListener('keyup', e => {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    loadEdits();
+    setupButtons();
     loadState();
     updateCard();
 });
